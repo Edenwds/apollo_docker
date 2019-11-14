@@ -40,7 +40,7 @@ spring:
       - docker0
       - veth.*
 ```
-5. 修改数据库中注册中心的地址，直接修改ApolloConfigDB中ServerConfig表的eureka.service.url字段的值。这里因为使用的同时容器化部署的Eureka集群，所以**地址为container_name:port，多个地址用逗号分隔**。
+5. 修改数据库中注册中心的地址，直接修改ApolloConfigDB中ServerConfig表的eureka.service.url字段的值。这里因为使用的是容器化部署的Eureka集群，所以**地址为container_name:port，多个地址用逗号分隔**。
 
 ```
 http://eureka-server1:3030/eureka/,http://eureka-server2:3031/eureka/
