@@ -1,0 +1,48 @@
+version: '3'
+services:
+  apolloconfigservice:
+    image: apollo-configservice
+    container_name: apollo-configservice
+    networks:
+      - mysql
+      - eureka_eureka-net
+      - configservice
+    volumes:
+      - /opt/docker/apollo/logs/config:/opt/logs/configservice
+    ports:
+      - 9003:9003
+  
+  apolloadminservice:
+    image: apollo-adminservice
+    container_name: apollo-adminservice
+    depends_on: 
+      - apolloconfigservice
+    networks:
+      - mysql
+      - eureka_eureka-net
+    volumes:
+      - /opt/docker/apollo/logs/admin:/opt/logs/adminservice  
+    ports:
+      - 9004:9004
+
+  apolloportalservice:
+    image: apollo-portal
+    container_name: apollo-portal
+    depends_on: 
+      - apolloconfigservice
+      - apolloadminservice
+    networks:
+      - mysql
+      - configservice
+    volumes:
+      - /opt/docker/apollo/logs/portal:/opt/logs/apolloportal   
+    ports:
+      - 9005:9005
+
+networks:
+  eureka_eureka-net:
+    external: true
+  mysql:
+    external: true
+  configservice:
+    external: true  
