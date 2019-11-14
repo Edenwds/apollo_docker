@@ -1,4 +1,4 @@
-# apollo_docker
+# Apollo & Docker 
 ## 简介
 本文档依据Apollo官方的分布式部署文档，介绍如何实现根据源码定制安装包并实现docker容器化分布式部署。
 # 目的
@@ -40,7 +40,7 @@ spring:
       - docker0
       - veth.*
 ```
-5. 修改数据库中注册中心的地址，直接修改ApolloConfigDB中ServerConfig表的eureka.service.url字段的值。这里因为使用的同时容器化部署的Eureka集群，所以地址为container_name:port，多个地址用逗号分隔。
+5. 修改数据库中注册中心的地址，直接修改ApolloConfigDB中ServerConfig表的eureka.service.url字段的值。这里因为使用的同时容器化部署的Eureka集群，所以**地址为container_name:port，多个地址用逗号分隔**。
 
 ```
 http://eureka-server1:3030/eureka/,http://eureka-server2:3031/eureka/
@@ -58,7 +58,7 @@ apollo_portal_db_url=jdbc:mysql://mysql5.7:3306/ApolloPortalDB?characterEncoding
 apollo_portal_db_username=root
 apollo_portal_db_password=
 ```
-7. 配置各环境的meta service地址，由于meta service和config-service是在同一个jvm部署的，所以这个地址就是apollo-configservice的地址 container_name:port。同样直接编辑scripts/build.sh文件。
+7. 配置各环境的meta service地址，**由于meta service和config-service是在同一个jvm部署的，所以这个地址就是apollo-configservice的地址 container_name:port**。同样直接编辑scripts/build.sh文件。
 
 ```
 dev_meta=http://apollo-configservice:9003
