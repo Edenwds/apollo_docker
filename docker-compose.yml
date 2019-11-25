@@ -5,8 +5,7 @@ services:
     container_name: apollo-configservice
     networks:
       - mysql
-      - eureka_eureka-net
-      - configservice
+      - eureka-net
     volumes:
       - /opt/docker/apollo/logs/config:/opt/logs/configservice
     ports:
@@ -19,7 +18,7 @@ services:
       - apolloconfigservice
     networks:
       - mysql
-      - eureka_eureka-net
+      - eureka-net
     volumes:
       - /opt/docker/apollo/logs/admin:/opt/logs/adminservice  
     ports:
@@ -33,7 +32,7 @@ services:
       - apolloadminservice
     networks:
       - mysql
-      - configservice
+      - eureka-net
     volumes:
       - /opt/docker/apollo/logs/portal:/opt/logs/apolloportal   
     ports:
@@ -44,5 +43,3 @@ networks:
     external: true
   mysql:
     external: true
-  configservice:
-    external: true  
