@@ -16,7 +16,7 @@
   
 2. 修改项目默认端口，日志输出路径，等级。这里主要是针对apollo-configservice apollo-adminservice apollo-portal三个项目进行修改。
 
-> 修改端口：分别修改三个项目scripts/startup.sh的SERVER_PORT。这里我分别修改为9003,9004,9005。
+> 修改端口：分别修改三个项目scripts/startup.sh的SERVER_PORT。这里我分别修改为9003,9004,9005。docker部署，外部客户端使用时，可以不修改默认端口，直接使用端口映射。
 
 > 修改日志配置：  
     调整日志输出路径分别修改三个项目scripts/startup.sh和apollo-{project}.conf中的LOG_DIR。  
@@ -30,7 +30,7 @@ apollo:
     server:
       enabled: false
 ```
-4. 调整网络策略，忽略Apollo客户端和Portal无法访问的网卡，分别编辑apollo-configservice和apollo-adminservice的application.yml文件，添加以下配置：
+4. 调整网络策略，忽略Apollo客户端和Portal无法访问的网卡，分别编辑apollo-configservice和apollo-adminservice的application.yml文件，添加以下配置。但是当需要进行容器间通信时，需外部客户端访问，则要指定注册ip，详见wiki。
 
 ```
 spring:
@@ -46,7 +46,7 @@ spring:
 http://eureka-server1:3030/eureka/,http://eureka-server2:3031/eureka/
 ```
   
-6. 配置数据库连接信息，直接编辑项目中的 scripts/build.sh 文件，配置ApolloConfigDB和ApolloPortalDB相关的连接信息。由于我的数据库也是docker部署的，这里的IP为容器名称。
+6. 配置数据库连接信息，直接编辑项目中的 scripts/build.sh 文件，配置ApolloConfigDB和ApolloPortalDB相关的连接信息。由于我的数据库也是docker部署的，这里的ip为容器名称。
 ```
 # apollo config db info
 apollo_config_db_url=jdbc:mysql://mysql5.7:3306/ApolloConfigDB?characterEncoding=utf8
@@ -58,13 +58,13 @@ apollo_portal_db_url=jdbc:mysql://mysql5.7:3306/ApolloPortalDB?characterEncoding
 apollo_portal_db_username=root
 apollo_portal_db_password=
 ```
-7. 配置各环境的meta service地址，**由于meta service和config-service是在同一个jvm部署的，所以这个地址就是apollo-configservice的地址 container_name:port**。同样直接编辑scripts/build.sh文件。
+7. 配置各环境的meta service地址，**由于meta service和config-service是在同一个jvm部署的，所以这个地址就是apollo-configservice的地址 container_name:port**，这个端口要和容器监听端口一致。同样直接编辑scripts/build.sh文件。
 
 ```
 dev_meta=http://apollo-configservice:9003
 ```
 8. 根据需求修改配置后，进行编译打包。执行./build.sh脚本，该脚本会依次打包apollo-configservice, apollo-adminservice, apollo-portal。
-> 由于不同环境所用的数据库信息不同，所以针对不同环境apollo-configservice和apollo-adminservice需要使用不同的数据信息重新打包，apollo-protal只需要打包一次。
+> 由于不同环境所用的数据库信息不同，所以针对不同环境apollo-configservice和apollo-adminservice需要使用不同的数据信息重新打包，apollo-portal只需要打包一次。
 
 9. 分别在三个项目的target文件夹下获取安装包，名称分别为apollo-configservice-x.x.x-github.zip, apollo-adminservice-x.x.x-githup.zip, apollo-portal-x.x.x-github.zip
   
@@ -73,8 +73,8 @@ dev_meta=http://apollo-configservice:9003
     Docfile中的变量VERSION应该和安装包的X.X.X值一致  
     当修改了监听端口时，SERVER_PORT值应该与使用值一致
 11. 编写docker-compose文件。注意，这里连接mysql，eureka,以及portal需要从meta service获取服务地址信息都涉及到了容器间的通信，由于**这些容器都部署在同一个docker daemon进程下，所以使用bridge networks 进行容器间的通信**。
-> 这里使用了三个bridge network, 分别为configservice, mysql, eureka_net  
-  eureka_net 为eureka容器化部署集群时创建，其他两个可以提前创建，也可以在启动容器时创建。  
+> 这里使用了两个bridge network, 分别为 mysql, eureka_net  
+  eureka_net 为eureka容器化部署集群时创建，bridge network可以提前创建，也可以在启动容器时创建。  
   注意： 提前创建后，在docker-compose文件中在networks需要将external设置为true  
   提前创建后，使用命令将正在运行的容器连接到network。如： dockcer network connect [network_name] [container_name]
 
@@ -86,8 +86,7 @@ services:
     container_name: apollo-configservice
     networks:
       - mysql
-      - eureka_eureka-net
-      - configservice
+      - eureka-net
     volumes:
       - /opt/docker/apollo/logs/config:/opt/logs/configservice
     ports:
@@ -100,7 +99,7 @@ services:
       - apolloconfigservice
     networks:
       - mysql
-      - eureka_eureka-net
+      - eureka-net
     volumes:
       - /opt/docker/apollo/logs/admin:/opt/logs/adminservice  
     ports:
@@ -114,7 +113,7 @@ services:
       - apolloadminservice
     networks:
       - mysql
-      - configservice
+      - eureka-net
     volumes:
       - /opt/docker/apollo/logs/portal:/opt/logs/apolloportal   
     ports:
@@ -125,12 +124,9 @@ networks:
     external: true
   mysql:
     external: true
-  configservice:
-    external: true  
 
 ```
 12. 将docker-compose.yml上传到服务器，使用命令docker-compose up -d 启动服务。
 > 在docker-compose.yml文件中使用了depends_on来确定容器的启动顺序，确保apollo-configservice和apollo-adminservcie服务在apollo-portal服务前启动。  
-  在实际操作中，我将apollo-configservice和apollo-adminservice服务使用一个docker-compose.yml文件编排，apollo-portal单独使用一个。
 
 更多详细信息请看 [wiki](https://github.com/ctripcorp/apollo/wiki/%E5%88%86%E5%B8%83%E5%BC%8F%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97)
