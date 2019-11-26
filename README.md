@@ -130,3 +130,12 @@ networks:
 > 在docker-compose.yml文件中使用了depends_on来确定容器的启动顺序，确保apollo-configservice和apollo-adminservcie服务在apollo-portal服务前启动。  
 
 更多详细信息请看 [wiki](https://github.com/ctripcorp/apollo/wiki/%E5%88%86%E5%B8%83%E5%BC%8F%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97)
+***
+## 自定义 Meta Server Provider
+应用接入Apollo配置中心，需要指定 Meta Server的地址，当有很多应用时，每个项目分别指定十分不便。
+这里根据文档，自定义 Meta Server 地址定位逻辑，封装jar包后，所有应用可依赖此jar包，实现统一的 Meta Server 地址指定。  
+> 在 resources 下创建 apollo-env.properties 文件，将各个环境的 Meta Server 地址写入此文件。在获取时，首先会从 Java System Property 中获取，若存在，则直接返回值，否则会从此配置文件获取。  
+
+> 注意，这里使用了 Java Service Loader 模式，需要在 resources 下创建 META-INF/services/ com.ctrip.framework.apollo.core.spi.MetaServerProvider 文件，写入自定义实现 MetaServerProvider 的全类名。 
+
+详细信息请看 [wiki](https://github.com/ctripcorp/apollo/wiki/Java%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97) Apollo Meta Server 部分
